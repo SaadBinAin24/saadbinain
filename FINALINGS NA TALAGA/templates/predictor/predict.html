@@ -1,0 +1,435 @@
+{% extends "predictor/base.html" %}
+{% load crispy_forms_tags %}
+{% load humanize %}
+
+{% block title %}Predict Education Costs | International Education Cost Predictor{% endblock %}
+
+{% block nav_predict_active %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+    .manual-entry-fields {
+        display: none;
+    }
+    .dropdown-fields {
+        display: block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1 class="mb-4"><i class="fas fa-calculator me-2"></i>Education Cost Prediction</h1>
+<p class="lead">Enter your educational program details to get an estimated cost prediction.</p>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3 class="card-title mb-0">Prediction Form</h3>
+            </div>
+            <div class="card-body">
+                <form method="post" id="predictionForm">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            {{ form.country|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.city|as_crispy_field }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-12">
+                            {{ form.university|as_crispy_field }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            {{ form.program|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.other_program|as_crispy_field }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            {{ form.level|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.duration_years|as_crispy_field }}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            {{ form.use_manual_values|as_crispy_field }}
+                        </div>
+                    </div>
+                    
+                    <div class="row dropdown-fields">
+                        <div class="col-md-6">
+                            {{ form.living_cost_index|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.rent_usd|as_crispy_field }}
+                        </div>
+                    </div>
+                    
+                    <div class="row manual-entry-fields">
+                        <div class="col-md-6">
+                            {{ form.living_cost_index_manual|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.rent_usd_manual|as_crispy_field }}
+                        </div>
+                    </div>
+                    
+                    <div class="row dropdown-fields">
+                        <div class="col-md-4">
+                            {{ form.visa_fee_usd|as_crispy_field }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form.insurance_usd|as_crispy_field }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form.exchange_rate|as_crispy_field }}
+                        </div>
+                    </div>
+                    
+                    <div class="row manual-entry-fields">
+                        <div class="col-md-4">
+                            {{ form.visa_fee_usd_manual|as_crispy_field }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form.insurance_usd_manual|as_crispy_field }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form.exchange_rate_manual|as_crispy_field }}
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100 mt-3">
+                        <i class="fas fa-calculator me-2"></i>Get Prediction
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3 class="card-title mb-0">Form Guide</h3>
+            </div>
+            <div class="card-body">
+                <p><strong>Country & City:</strong> Location of the university</p>
+                <p><strong>University:</strong> Name of the educational institution</p>
+                <p><strong>Program:</strong> Field of study (e.g., Computer Science)</p>
+                <p><strong>Level:</strong> Degree level (Bachelor's, Master's, PhD)</p>
+                <p><strong>Duration:</strong> Length of program in years</p>
+                <p><strong>Living Cost Index:</strong> Relative cost of living (0-100 scale)</p>
+                <p><strong>Rent:</strong> Monthly accommodation costs in USD</p>
+                <p><strong>Visa Fee:</strong> One-time visa application fee in USD</p>
+                <p><strong>Insurance:</strong> Annual health insurance cost in USD</p>
+                <p><strong>Exchange Rate:</strong> Local currency to USD rate</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if prediction_result %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card prediction-result border-success">
+            <div class="card-header bg-success text-white">
+                <h3 class="card-title mb-0"><i class="fas fa-check-circle me-2"></i>Prediction Results</h3>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title text-primary">Estimated Tuition</h5>
+                                <h2 class="display-6">${{ prediction_result.estimated_tuition_usd|floatformat:2|intcomma }}</h2>
+                                <p class="text-muted">For the entire program</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title text-primary">Living Expenses</h5>
+                                <h2 class="display-6">${{ prediction_result.living_expenses_usd|floatformat:2|intcomma }}</h2>
+                                <p class="text-muted">Including rent, insurance, and visa fees</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card mb-3 border-primary">
+                            <div class="card-body">
+                                <h5 class="card-title text-primary">Total Cost</h5>
+                                <h2 class="display-6">${{ prediction_result.total_cost_usd|floatformat:2|intcomma }}</h2>
+                                <p class="text-muted">Tuition + Living Expenses</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info mt-3">
+                    <p class="mb-0"><strong>Note:</strong> This is an estimate based on our machine learning model. Actual costs may vary.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Show/hide "other program" field based on program selection
+        const programSelect = document.getElementById('id_program');
+        const otherProgramField = document.getElementById('div_id_other_program');
+        const countrySelect = document.getElementById('id_country');
+        const citySelect = document.getElementById('id_city');
+        const universitySelect = document.getElementById('id_university');
+        const levelSelect = document.getElementById('id_level');
+        const durationSelect = document.getElementById('id_duration_years');
+        const useManualValuesCheckbox = document.getElementById('id_use_manual_values');
+        const dropdownFields = document.querySelectorAll('.dropdown-fields');
+        const manualEntryFields = document.querySelectorAll('.manual-entry-fields');
+        
+        // Add Other option to program dropdown if not already present
+        let hasOtherOption = false;
+        for (let i = 0; i < programSelect.options.length; i++) {
+            if (programSelect.options[i].value === 'Other') {
+                hasOtherOption = true;
+                break;
+            }
+        }
+        
+        if (!hasOtherOption) {
+            const otherOption = document.createElement('option');
+            otherOption.value = 'Other';
+            otherOption.text = 'Other (specify)';
+            programSelect.add(otherOption);
+        }
+        
+        function toggleOtherProgram() {
+            if (programSelect.value === 'Other') {
+                otherProgramField.style.display = 'block';
+            } else {
+                otherProgramField.style.display = 'none';
+            }
+        }
+        
+        // Toggle form display for manual vs dropdown
+        function toggleManualEntryFields() {
+            const useManual = useManualValuesCheckbox.checked;
+            
+            dropdownFields.forEach(field => {
+                field.style.display = useManual ? 'none' : 'flex';
+            });
+            
+            manualEntryFields.forEach(field => {
+                field.style.display = useManual ? 'flex' : 'none';
+            });
+        }
+        
+        // Initialize on page load
+        toggleOtherProgram();
+        toggleManualEntryFields();
+        
+        // Add event listeners for changes
+        programSelect.addEventListener('change', toggleOtherProgram);
+        useManualValuesCheckbox.addEventListener('change', toggleManualEntryFields);
+        
+        // Load the education cost dataset
+        let educationData = null;
+        
+        fetch('/api/education_data/')
+            .then(response => response.json())
+            .then(data => {
+                educationData = data;
+                console.log('Education data loaded successfully');
+            })
+            .catch(error => console.error('Error loading education data:', error));
+        
+        // Update city dropdown when country changes
+        countrySelect.addEventListener('change', function() {
+            const selectedCountry = this.value;
+            
+            // Clear city, university, and program dropdowns
+            citySelect.innerHTML = '<option value="">-- Select City --</option>';
+            universitySelect.innerHTML = '<option value="">-- Select City First --</option>';
+            programSelect.innerHTML = '<option value="">-- Select University First --</option>';
+            
+            // Add Other option to program dropdown
+            const otherOption = document.createElement('option');
+            otherOption.value = 'Other';
+            otherOption.text = 'Other (specify)';
+            programSelect.add(otherOption);
+            
+            if (!selectedCountry) return;
+            
+            // Filter cities by selected country
+            fetch(`/api/cities/?country=${selectedCountry}`)
+                .then(response => response.json())
+                .then(cities => {
+                    cities.forEach(city => {
+                        const option = document.createElement('option');
+                        option.value = city;
+                        option.text = city;
+                        citySelect.add(option);
+                    });
+                })
+                .catch(error => console.error('Error loading cities:', error));
+        });
+        
+        // Update university dropdown when city changes
+        citySelect.addEventListener('change', function() {
+            const selectedCountry = countrySelect.value;
+            const selectedCity = this.value;
+            
+            // Clear university and program dropdowns
+            universitySelect.innerHTML = '<option value="">-- Select University --</option>';
+            programSelect.innerHTML = '<option value="">-- Select University First --</option>';
+            
+            // Add Other option to program dropdown
+            const otherOption = document.createElement('option');
+            otherOption.value = 'Other';
+            otherOption.text = 'Other (specify)';
+            programSelect.add(otherOption);
+            
+            if (!selectedCountry || !selectedCity) return;
+            
+            // Filter universities by selected country and city
+            fetch(`/api/universities/?country=${selectedCountry}&city=${selectedCity}`)
+                .then(response => response.json())
+                .then(universities => {
+                    universities.forEach(university => {
+                        const option = document.createElement('option');
+                        option.value = university;
+                        option.text = university;
+                        universitySelect.add(option);
+                    });
+                })
+                .catch(error => console.error('Error loading universities:', error));
+        });
+        
+        // Update programs and auto-fill form fields when university is selected
+        universitySelect.addEventListener('change', function() {
+            const selectedCountry = countrySelect.value;
+            const selectedCity = citySelect.value;
+            const selectedUniversity = this.value;
+            
+            if (!selectedCountry || !selectedCity || !selectedUniversity) return;
+            
+            // Clear program dropdown but keep the Other option
+            programSelect.innerHTML = '<option value="">-- Select Program --</option>';
+            
+            // Add Other option to program dropdown
+            const otherOption = document.createElement('option');
+            otherOption.value = 'Other';
+            otherOption.text = 'Other (specify)';
+            programSelect.add(otherOption);
+            
+            // Get programs for the selected university
+            fetch(`/api/programs/?country=${selectedCountry}&city=${selectedCity}&university=${selectedUniversity}`)
+                .then(response => response.json())
+                .then(programs => {
+                    programs.forEach(program => {
+                        const option = document.createElement('option');
+                        option.value = program;
+                        option.text = program;
+                        programSelect.add(option);
+                    });
+                })
+                .catch(error => console.error('Error loading programs:', error));
+            
+            // Get default values for the selected university
+            fetch(`/api/university_data/?country=${selectedCountry}&city=${selectedCity}&university=${selectedUniversity}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.length > 0) {
+                        const universityData = data[0];
+                        
+                        // Auto-fill dropdown values
+                        const livingCostSelect = document.getElementById('id_living_cost_index');
+                        const rentSelect = document.getElementById('id_rent_usd');
+                        const visaSelect = document.getElementById('id_visa_fee_usd');
+                        const insuranceSelect = document.getElementById('id_insurance_usd');
+                        const exchangeSelect = document.getElementById('id_exchange_rate');
+                        
+                        // Find and select the matching option in each dropdown
+                        selectOptionByValue(livingCostSelect, universityData.Living_Cost_Index);
+                        selectOptionByValue(rentSelect, universityData.Rent_USD);
+                        selectOptionByValue(visaSelect, universityData.Visa_Fee_USD);
+                        selectOptionByValue(insuranceSelect, universityData.Insurance_USD);
+                        selectOptionByValue(exchangeSelect, universityData.Exchange_Rate);
+                        
+                        // Also fill manual entry fields
+                        document.getElementById('id_living_cost_index_manual').value = universityData.Living_Cost_Index;
+                        document.getElementById('id_rent_usd_manual').value = universityData.Rent_USD;
+                        document.getElementById('id_visa_fee_usd_manual').value = universityData.Visa_Fee_USD;
+                        document.getElementById('id_insurance_usd_manual').value = universityData.Insurance_USD;
+                        document.getElementById('id_exchange_rate_manual').value = universityData.Exchange_Rate;
+                    }
+                })
+                .catch(error => console.error('Error loading university data:', error));
+        });
+        
+        // Update level and duration when program is selected
+        programSelect.addEventListener('change', function() {
+            const selectedCountry = countrySelect.value;
+            const selectedCity = citySelect.value;
+            const selectedUniversity = universitySelect.value;
+            const selectedProgram = this.value;
+            
+            // Don't make a request for the "Other" option
+            if (!selectedCountry || !selectedCity || !selectedUniversity || !selectedProgram || selectedProgram === 'Other') {
+                toggleOtherProgram();
+                return;
+            }
+            
+            fetch(`/api/program_details/?country=${selectedCountry}&city=${selectedCity}&university=${selectedUniversity}&program=${selectedProgram}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.length > 0) {
+                        const programData = data[0];
+                        
+                        // Auto-select level and duration based on program
+                        selectOptionByValue(levelSelect, programData.Level);
+                        selectOptionByValue(durationSelect, programData.Duration_Years);
+                    }
+                })
+                .catch(error => console.error('Error loading program details:', error));
+            
+            toggleOtherProgram();
+        });
+        
+        // Helper function to select an option in a dropdown by value
+        function selectOptionByValue(selectElement, value) {
+            for (let i = 0; i < selectElement.options.length; i++) {
+                if (selectElement.options[i].value == value) {
+                    selectElement.selectedIndex = i;
+                    return;
+                }
+            }
+            // If no exact match found, select the first non-empty option
+            for (let i = 0; i < selectElement.options.length; i++) {
+                if (selectElement.options[i].value) {
+                    selectElement.selectedIndex = i;
+                    return;
+                }
+            }
+        }
+    });
+</script>
+{% endblock %} 
